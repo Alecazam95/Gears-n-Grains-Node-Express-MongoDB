@@ -11,6 +11,10 @@ const foodSchema = new Schema(
       required: true,
       unique: true,
     },
+    type: {
+      type: String,
+      required: true,
+    },
     description: {
       type: String,
       required: true,

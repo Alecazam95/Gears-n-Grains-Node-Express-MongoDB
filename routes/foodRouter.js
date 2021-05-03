@@ -2,10 +2,14 @@ const express = require("express");
 const Food = require("../models/food");
 const foodRouter = express.Router();
 const authenticate = require("../authenticate");
+const cors = require("./cors");
 
 foodRouter
   .route("/")
-  .get((req, res, next) => {
+  .options(cors.corsWithOptions, authenticate.verifyUser, (req, res) =>
+    res.sendStatus(200)
+  )
+  .get(cors.cors, (req, res, next) => {
     Food.find()
       .then((foods) => {
         res.StatusCode = 200;
@@ -14,21 +18,27 @@ foodRouter
       })
       .catch((err) => next(err));
   })
-  .post(authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) => {
-    Food.create(req.body)
-      .then((food) => {
-        console.log("Food Created", food);
-        res.statusCode = 200;
-        res.setHeader("Content-Type", "application/json");
-        res.json(food);
-      })
-      .catch((err) => next(err));
-  })
-  .put(authenticate.verifyUser, (req, res) => {
+  .post(
+    cors.corsWithOptions,
+    authenticate.verifyUser,
+    authenticate.verifyAdmin,
+    (req, res, next) => {
+      Food.create(req.body)
+        .then((food) => {
+          console.log("Food Created", food);
+          res.statusCode = 200;
+          res.setHeader("Content-Type", "application/json");
+          res.json(food);
+        })
+        .catch((err) => next(err));
+    }
+  )
+  .put(cors.corsWithOptions, authenticate.verifyUser, (req, res) => {
     res.statusCode = 403;
     res.end("PUT operation not supported on /food");
   })
   .delete(
+    cors.corsWithOptions,
     authenticate.verifyUser,
     authenticate.verifyAdmin,
     (req, res, next) => {
@@ -44,7 +54,10 @@ foodRouter
 
 foodRouter
   .route("/:foodItemId")
-  .get((req, res, next) => {
+  .options(cors.corsWithOptions, authenticate.verifyUser, (req, res) =>
+    res.sendStatus(200)
+  )
+  .get(cors.cors, (req, res, next) => {
     Food.findById(req.params.foodItemId)
       .then((food) => {
         res.statusCode = 200;
@@ -53,25 +66,31 @@ foodRouter
       })
       .catch((err) => next(err));
   })
-  .post(authenticate.verifyUser, (req, res) => {
+  .post(cors.corsWithOptions, authenticate.verifyUser, (req, res) => {
     res.end(`POST operation not supported on /food/${req.params.foodItemId}`);
   })
-  .put(authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) => {
-    Food.findByIdAndUpdate(
-      req.params.foodItemId,
-      {
-        $set: req.body,
-      },
-      { new: true }
-    )
-      .then((food) => {
-        res.statusCode = 200;
-        res.setHeader("Content-Type", "application/json");
-        res.json(food);
-      })
-      .catch((err) => next(err));
-  })
+  .put(
+    cors.corsWithOptions,
+    authenticate.verifyUser,
+    authenticate.verifyAdmin,
+    (req, res, next) => {
+      Food.findByIdAndUpdate(
+        req.params.foodItemId,
+        {
+          $set: req.body,
+        },
+        { new: true }
+      )
+        .then((food) => {
+          res.statusCode = 200;
+          res.setHeader("Content-Type", "application/json");
+          res.json(food);
+        })
+        .catch((err) => next(err));
+    }
+  )
   .delete(
+    cors.corsWithOptions,
     authenticate.verifyUser,
     authenticate.verifyAdmin,
     (req, res, next) => {
